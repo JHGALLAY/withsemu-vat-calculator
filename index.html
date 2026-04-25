@@ -210,6 +210,21 @@
       .btn-row { flex-direction:column; }
     }
 
+    /* ── 개발취지 배너 ── */
+    .intro-banner {
+      background: linear-gradient(90deg, #0f2a4e 0%, #1a3c6b 60%, #00695c 100%);
+      color: rgba(255,255,255,0.88);
+      font-size: 12.5px;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.6;
+      letter-spacing: 0.1px;
+      border-bottom: 2px solid var(--mint);
+    }
+    .intro-icon { font-size: 15px; flex-shrink: 0; }
+
     /* ── 인쇄 ── */
     @media print {
       header,.sub-tab-bar,.btn-row,.filter-row,footer,.toast { display:none!important; }
@@ -237,13 +252,20 @@
     </div>
   </div>
   <div class="main-tabs">
-    <button class="main-tab active" onclick="switchMain('view-simple',this)">간편 계산기</button>
-    <button class="main-tab" onclick="switchMain('view-declare',this)">부가세 신고서</button>
+    <button class="main-tab active" onclick="switchMain('view-declare',this)">부가세 신고서</button>
+    <button class="main-tab" onclick="switchMain('view-simple',this)">간편 계산기</button>
   </div>
 </header>
 
+<!-- 개발 취지 배너 -->
+<div class="intro-banner">
+  <span class="intro-icon">💡</span>
+  <span>제이에이치갤러리의 소프트웨어 개발 지식과 원택스의 세법 지식을 합하여,
+  세무사무소 직원들이 사전에 부가세를 계산하는 데 도움을 주고자 합니다.</span>
+</div>
+
 <!-- 간편계산기 서브탭 바 -->
-<div class="sub-tab-bar" id="simple-subtabs">
+<div class="sub-tab-bar" id="simple-subtabs" style="display:none">
   <button class="sub-tab active" onclick="switchSub('s1',this)">공급가액 계산</button>
   <button class="sub-tab" onclick="switchSub('s2',this)">역산 계산</button>
   <button class="sub-tab" onclick="switchSub('s3',this)">기간별 합계<span class="badge" id="entry-count">0</span></button>
@@ -253,7 +275,7 @@
 <main>
 
 <!-- ════════════ 간편 계산기 ════════════ -->
-<div class="view active" id="view-simple">
+<div class="view" id="view-simple">
 
   <!-- S1: 공급가액 계산 -->
   <div class="sub-pane active" id="s1">
@@ -383,7 +405,7 @@
 
 
 <!-- ════════════ 부가세 신고서 ════════════ -->
-<div class="view" id="view-declare">
+<div class="view active" id="view-declare">
 
   <!-- 기본 정보 -->
   <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
