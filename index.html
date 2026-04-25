@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>원택스 부가세 계산기 | WonTax VAT Calculator</title>
+  <style>
+    :root {
+      --navy: #1a3c6b;
+      --mint: #00b894;
+      --mint-light: #e8f8f5;
+      --gray: #f4f6f9;
+      --border: #dde3ec;
+      --text: #2d3748;
+      --subtext: #718096;
+      --white: #ffffff;
+      --shadow: 0 2px 12px rgba(26,60,107,0.08);
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      background: var(--navy);
+      padding: 20px 24px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(26,60,107,0.18);
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    /* SVG Logo */
+    .logo-wrap { display: flex; align-items: center; gap: 10px; }
+    .logo-svg { width: 44px; height: 44px; flex-shrink: 0; }
+    .logo-text { display: flex; flex-direction: column; line-height: 1.2; }
+    .logo-text .en { font-size: 18px; font-weight: 700; color: var(--mint); letter-spacing: 1px; }
+    .logo-text .ko { font-size: 11px; color: rgba(255,255,255,0.65); letter-spacing: 2px; }
+    .header-title {
+      margin-left: auto;
+      color: rgba(255,255,255,0.8);
+      font-size: 13px;
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    /* ── 탭 ── */
+    .tabs {
+      display: flex;
+      gap: 2px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 0;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .tab-btn.active {
+      color: var(--mint);
+      border-bottom-color: var(--mint);
+    }
+    .tab-btn:hover:not(.active) { color: rgba(255,255,255,0.8); }
+
+    /* ── 컨텐츠 ── */
+    main { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── 카드 ── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .card-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px; height: 16px;
+      background: var(--mint);
+      border-radius: 2px;
+    }
+
+    /* ── 입력 ── */
+    .input-group { margin-bottom: 14px; }
+    label { display: block; font-size: 12px; color: var(--subtext); margin-bottom: 5px; font-weight: 500; }
+    input[type="number"], input[type="text"], input[type="date"], select {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--mint); }
+    input[type="number"] { text-align: right; }
+
+    /* ── 결과 박스 ── */
+    .result-box {
+      background: var(--mint-light);
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-top: 16px;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(0,184,148,0.15);
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-label { font-size: 13px; color: var(--subtext); }
+    .result-value { font-size: 15px; font-weight: 700; color: var(--navy); }
+    .result-value.highlight { color: var(--mint); font-size: 18px; }
+
+    /* ── 버튼 ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.18s;
+    }
+    .btn-primary { background: var(--navy); color: var(--white); }
+    .btn-primary:hover { background: #2a5299; }
+    .btn-mint { background: var(--mint); color: var(--white); }
+    .btn-mint:hover { background: #00a381; }
+    .btn-outline {
+      background: transparent;
+      color: var(--navy);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--navy); }
+    .btn-danger { background: #fff0f0; color: #e53e3e; border: 1.5px solid #fed7d7; }
+    .btn-danger:hover { background: #fed7d7; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+    /* ── 내역 테이블 ── */
+    .history-table-wrap { overflow-x: auto; margin-top: 8px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      background: var(--navy);
+      color: var(--white);
+      padding: 9px 10px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    td {
+      padding: 9px 10px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    td:first-child, td:nth-child(2) { text-align: center; }
+    tr:hover td { background: var(--mint-light); }
+    tr.subtotal td { background: #eef2ff; font-weight: 700; color: var(--navy); }
+    tr.grand-total td { background: var(--navy); color: var(--white); font-weight: 700; }
+    .empty-row td { text-align: center; color: var(--subtext); padding: 24px; }
+
+    /* ── 기간 필터 ── */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .filter-row .input-group { margin-bottom: 0; flex: 1; min-width: 120px; }
+    .filter-row .btn { align-self: flex-end; }
+
+    /* ── 뱃지 ── */
+    .badge {
+      display: inline-block;
+      background: var(--mint);
+      color: white;
+      border-radius: 20px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+
+    /* ── 푸터 ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--subtext);
+      font-size: 12px;
+    }
+
+    /* ── 알림 ── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--navy);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 13px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── 반응형 ── */
+    @media (max-width: 480px) {
+      header { padding: 16px 12px 0; }
+      main { padding: 16px 10px; }
+      .card { padding: 16px; }
+      .btn-row { flex-direction: column; }
+      .btn { justify-content: center; }
+    }
+
+    /* ── 인쇄 ── */
+    @media print {
+      header, .tabs, .btn-row, .filter-row, footer, .toast { display: none !important; }
+      body { background: white; }
+      .card { box-shadow: none; border: 1px solid #ddd; }
+      .tab-pane { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<header>
+  <div class="header-top">
+    <div class="logo-wrap">
+      <!-- SVG Logo -->
+      <svg class="logo-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="44" height="44" rx="10" fill="#00b894"/>
+        <text x="22" y="30" font-size="22" font-weight="900" text-anchor="middle" fill="white" font-family="Arial,sans-serif">₩</text>
+        <!-- 하단 바 -->
+        <rect x="8" y="35" width="28" height="3" rx="1.5" fill="white" opacity="0.4"/>
+        <!-- 상단 우측 강조 점 -->
+        <circle cx="36" cy="8" r="4" fill="#1a3c6b"/>
+      </svg>
+      <div class="logo-text">
+        <span class="en">WonTax</span>
+        <span class="ko">원택스</span>
+      </div>
+    </div>
+    <div class="header-title">부가세 예상 계산기</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab1', this)">공급가액 계산</button>
+    <button class="tab-btn" onclick="switchTab('tab2', this)">역산 계산</button>
+    <button class="tab-btn" onclick="switchTab('tab3', this)">기간별 합계<span class="badge" id="entry-count">0</span></button>
+    <button class="tab-btn" onclick="switchTab('tab4', this)">계산 내역</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ━━ TAB 1: 공급가액 → 부가세 ━━ -->
+  <div class="tab-pane active" id="tab1">
+    <div class="card">
+      <div class="card-title">공급가액으로 계산</div>
+      <div class="input-group">
+        <label>공급가액 (원)</label>
+        <input type="number" id="t1-supply" placeholder="0" oninput="calcTab1()" />
+      </div>
+      <div class="input-group">
+        <label>세율</label>
+        <select id="t1-rate" onchange="calcTab1()">
+          <option value="0.10">10% (일반과세)</option>
+          <option value="0.00">0% (영세율)</option>
+          <option value="0.03">3% (간이과세)</option>
+        </select>
+      </div>
+      <div class="result-box" id="t1-result" style="display:none">
+        <div class="result-row">
+          <span class="result-label">공급가액</span>
+          <span class="result-value" id="t1-r-supply">0 원</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">부가세</span>
+          <span class="result-value highlight" id="t1-r-vat">0 원</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">합계 (공급대가)</span>
+          <span class="result-value" id="t1-r-total">0 원</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-mint" onclick="addToHistory('tab1')">+ 내역 추가</button>
+        <button class="btn btn-outline" onclick="clearTab1()">초기화</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">부가세 계산 안내</div>
+      <p style="font-size:13px;color:var(--subtext);line-height:1.7">
+        · 일반과세자: 공급가액 × 10% = 부가세<br>
+        · 영세율: 수출 등 일부 거래는 부가세 0%<br>
+        · 간이과세자: 업종별 부가가치율 적용 (평균 약 3%)<br>
+        · 본 계산기는 예상 금액 안내용이며, 신고 시 전문가 확인을 권장합니다.
+      </p>
+    </div>
+  </div>
+
+  <!-- ━━ TAB 2: 역산 계산 ━━ -->
+  <div class="tab-pane" id="tab2">
+    <div class="card">
+      <div class="card-title">공급대가로 역산</div>
+      <div class="input-group">
+        <label>공급대가 (VAT 포함 금액, 원)</label>
+        <input type="number" id="t2-total" placeholder="0" oninput="calcTab2()" />
+      </div>
+      <div class="input-group">
+        <label>세율</label>
+        <select id="t2-rate" onchange="calcTab2()">
+          <option value="0.10">10% (일반과세)</option>
+          <option value="0.00">0% (영세율)</option>
+          <option value="0.03">3% (간이과세)</option>
+        </select>
+      </div>
+      <div class="result-box" id="t2-result" style="display:none">
+        <div class="result-row">
+          <span class="result-label">공급대가 (입력)</span>
+          <span class="result-value" id="t2-r-total">0 원</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">공급가액</span>
+          <span class="result-value highlight" id="t2-r-supply">0 원</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">부가세</span>
+          <span class="result-value" id="t2-r-vat">0 원</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-mint" onclick="addToHistory('tab2')">+ 내역 추가</button>
+        <button class="btn btn-outline" onclick="clearTab2()">초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ━━ TAB 3: 기간별 합계 ━━ -->
+  <div class="tab-pane" id="tab3">
+    <div class="card">
+      <div class="card-title">거래 입력</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="input-group">
+          <label>날짜</label>
+          <input type="date" id="t3-date" />
+        </div>
+        <div class="input-group">
+          <label>세율</label>
+          <select id="t3-rate">
+            <option value="0.10">10%</option>
+            <option value="0.00">0%</option>
+            <option value="0.03">3%</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>거래처명</label>
+        <input type="text" id="t3-name" placeholder="거래처명 입력" />
+      </div>
+      <div class="input-group">
+        <label>공급가액 (원)</label>
+        <input type="number" id="t3-supply" placeholder="0" />
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addEntry()">거래 추가</button>
+        <button class="btn btn-outline" onclick="clearEntryForm()">초기화</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">기간 필터 및 집계</div>
+      <div class="filter-row">
+        <div class="input-group">
+          <label>시작일</label>
+          <input type="date" id="f-start" />
+        </div>
+        <div class="input-group">
+          <label>종료일</label>
+          <input type="date" id="f-end" />
+        </div>
+        <button class="btn btn-mint" onclick="renderEntries()">조회</button>
+        <button class="btn btn-outline" onclick="resetFilter()">전체</button>
+      </div>
+      <div class="history-table-wrap">
+        <table id="entry-table">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>거래처</th>
+              <th>공급가액</th>
+              <th>부가세</th>
+              <th>공급대가</th>
+              <th>세율</th>
+              <th>삭제</th>
+            </tr>
+          </thead>
+          <tbody id="entry-tbody"></tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="exportEntryCSV()">CSV 다운로드</button>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">인쇄</button>
+        <button class="btn btn-danger btn-sm" onclick="clearAllEntries()">전체 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ━━ TAB 4: 계산 내역 ━━ -->
+  <div class="tab-pane" id="tab4">
+    <div class="card">
+      <div class="card-title">저장된 계산 내역</div>
+      <div class="history-table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>시각</th>
+              <th>구분</th>
+              <th>공급가액</th>
+              <th>부가세</th>
+              <th>공급대가</th>
+              <th>삭제</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="exportHistoryCSV()">CSV 다운로드</button>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">인쇄</button>
+        <button class="btn btn-danger btn-sm" onclick="clearHistory()">전체 삭제</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  &copy; 2025 WonTax · 원택스 부가세 계산기 &nbsp;|&nbsp; 본 계산기는 참고용이며 실제 세금 신고와 다를 수 있습니다.
+</footer>
+
+<script>
+// ━━━━━━ 유틸 ━━━━━━
+const fmt = n => Math.round(n).toLocaleString('ko-KR') + ' 원';
+const fmtNum = n => Math.round(n).toLocaleString('ko-KR');
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ━━━━━━ 탭 전환 ━━━━━━
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'tab3') renderEntries();
+  if (id === 'tab4') renderHistory();
+}
+
+// ━━━━━━ TAB 1 ━━━━━━
+function calcTab1() {
+  const v = parseFloat(document.getElementById('t1-supply').value) || 0;
+  const r = parseFloat(document.getElementById('t1-rate').value);
+  const vat = Math.round(v * r);
+  const total = v + vat;
+  const box = document.getElementById('t1-result');
+  box.style.display = v ? 'block' : 'none';
+  document.getElementById('t1-r-supply').textContent = fmt(v);
+  document.getElementById('t1-r-vat').textContent = fmt(vat);
+  document.getElementById('t1-r-total').textContent = fmt(total);
+}
+function clearTab1() {
+  document.getElementById('t1-supply').value = '';
+  document.getElementById('t1-rate').value = '0.10';
+  document.getElementById('t1-result').style.display = 'none';
+}
+
+// ━━━━━━ TAB 2 ━━━━━━
+function calcTab2() {
+  const total = parseFloat(document.getElementById('t2-total').value) || 0;
+  const r = parseFloat(document.getElementById('t2-rate').value);
+  const supply = r === 0 ? total : Math.round(total / (1 + r));
+  const vat = total - supply;
+  const box = document.getElementById('t2-result');
+  box.style.display = total ? 'block' : 'none';
+  document.getElementById('t2-r-total').textContent = fmt(total);
+  document.getElementById('t2-r-supply').textContent = fmt(supply);
+  document.getElementById('t2-r-vat').textContent = fmt(vat);
+}
+function clearTab2() {
+  document.getElementById('t2-total').value = '';
+  document.getElementById('t2-rate').value = '0.10';
+  document.getElementById('t2-result').style.display = 'none';
+}
+
+// ━━━━━━ 계산 내역 (TAB 4) ━━━━━━
+function getHistory() { return JSON.parse(localStorage.getItem('wt_history') || '[]'); }
+function saveHistory(h) { localStorage.setItem('wt_history', JSON.stringify(h)); }
+
+function addToHistory(tab) {
+  let supply, vat, total, type;
+  if (tab === 'tab1') {
+    supply = parseFloat(document.getElementById('t1-supply').value) || 0;
+    const r = parseFloat(document.getElementById('t1-rate').value);
+    vat = Math.round(supply * r);
+    total = supply + vat;
+    type = '정산';
+  } else {
+    total = parseFloat(document.getElementById('t2-total').value) || 0;
+    const r = parseFloat(document.getElementById('t2-rate').value);
+    supply = r === 0 ? total : Math.round(total / (1 + r));
+    vat = total - supply;
+    type = '역산';
+  }
+  if (!supply && !total) { showToast('금액을 먼저 입력해 주세요.'); return; }
+  const h = getHistory();
+  h.unshift({ id: Date.now(), time: new Date().toLocaleString('ko-KR'), type, supply, vat, total });
+  saveHistory(h);
+  renderHistory();
+  showToast('내역이 저장되었습니다.');
+}
+
+function renderHistory() {
+  const h = getHistory();
+  const tbody = document.getElementById('history-tbody');
+  if (!h.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">저장된 내역이 없습니다.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = h.map(r => `
+    <tr>
+      <td style="text-align:center;font-size:11px">${r.time}</td>
+      <td style="text-align:center">${r.type}</td>
+      <td>${fmtNum(r.supply)}</td>
+      <td>${fmtNum(r.vat)}</td>
+      <td>${fmtNum(r.total)}</td>
+      <td style="text-align:center">
+        <button class="btn btn-danger btn-sm" onclick="deleteHistory(${r.id})">삭제</button>
+      </td>
+    </tr>`).join('');
+}
+
+function deleteHistory(id) {
+  saveHistory(getHistory().filter(r => r.id !== id));
+  renderHistory();
+}
+
+function clearHistory() {
+  if (!confirm('계산 내역을 모두 삭제할까요?')) return;
+  localStorage.removeItem('wt_history');
+  renderHistory();
+}
+
+function exportHistoryCSV() {
+  const h = getHistory();
+  if (!h.length) { showToast('내역이 없습니다.'); return; }
+  const rows = [['시각','구분','공급가액','부가세','공급대가'], ...h.map(r => [r.time, r.type, r.supply, r.vat, r.total])];
+  downloadCSV(rows, 'wontax_history.csv');
+}
+
+// ━━━━━━ 기간별 집계 (TAB 3) ━━━━━━
+function getEntries() { return JSON.parse(localStorage.getItem('wt_entries') || '[]'); }
+function saveEntries(e) { localStorage.setItem('wt_entries', JSON.stringify(e)); }
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('t3-date').value = todayStr();
+  updateEntryCount();
+  renderHistory();
+});
+
+function addEntry() {
+  const date = document.getElementById('t3-date').value;
+  const name = document.getElementById('t3-name').value.trim();
+  const supply = parseFloat(document.getElementById('t3-supply').value) || 0;
+  const rate = parseFloat(document.getElementById('t3-rate').value);
+  if (!date) { showToast('날짜를 입력해 주세요.'); return; }
+  if (!supply) { showToast('공급가액을 입력해 주세요.'); return; }
+  const vat = Math.round(supply * rate);
+  const total = supply + vat;
+  const entries = getEntries();
+  entries.push({ id: Date.now(), date, name: name || '(미입력)', supply, vat, total, rate });
+  entries.sort((a, b) => a.date.localeCompare(b.date));
+  saveEntries(entries);
+  updateEntryCount();
+  renderEntries();
+  clearEntryForm();
+  showToast('거래가 추가되었습니다.');
+}
+
+function clearEntryForm() {
+  document.getElementById('t3-date').value = todayStr();
+  document.getElementById('t3-name').value = '';
+  document.getElementById('t3-supply').value = '';
+  document.getElementById('t3-rate').value = '0.10';
+}
+
+function updateEntryCount() {
+  document.getElementById('entry-count').textContent = getEntries().length;
+}
+
+function renderEntries() {
+  let entries = getEntries();
+  const fs = document.getElementById('f-start').value;
+  const fe = document.getElementById('f-end').value;
+  if (fs) entries = entries.filter(e => e.date >= fs);
+  if (fe) entries = entries.filter(e => e.date <= fe);
+
+  const tbody = document.getElementById('entry-tbody');
+  if (!entries.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">거래 내역이 없습니다.</td></tr>';
+    return;
+  }
+
+  // 월별 그룹
+  const groups = {};
+  entries.forEach(e => {
+    const ym = e.date.slice(0, 7);
+    if (!groups[ym]) groups[ym] = [];
+    groups[ym].push(e);
+  });
+
+  let html = '';
+  let grandSupply = 0, grandVat = 0, grandTotal = 0;
+
+  Object.keys(groups).sort().forEach(ym => {
+    const rows = groups[ym];
+    let mSupply = 0, mVat = 0, mTotal = 0;
+    rows.forEach(e => {
+      mSupply += e.supply; mVat += e.vat; mTotal += e.total;
+      html += `<tr>
+        <td>${e.date}</td>
+        <td>${e.name}</td>
+        <td>${fmtNum(e.supply)}</td>
+        <td>${fmtNum(e.vat)}</td>
+        <td>${fmtNum(e.total)}</td>
+        <td>${(e.rate * 100).toFixed(0)}%</td>
+        <td style="text-align:center"><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">삭제</button></td>
+      </tr>`;
+    });
+    grandSupply += mSupply; grandVat += mVat; grandTotal += mTotal;
+    html += `<tr class="subtotal">
+      <td>${ym} 소계</td><td></td>
+      <td>${fmtNum(mSupply)}</td><td>${fmtNum(mVat)}</td><td>${fmtNum(mTotal)}</td><td></td><td></td>
+    </tr>`;
+  });
+
+  html += `<tr class="grand-total">
+    <td colspan="2">합계</td>
+    <td>${fmtNum(grandSupply)}</td><td>${fmtNum(grandVat)}</td><td>${fmtNum(grandTotal)}</td><td></td><td></td>
+  </tr>`;
+
+  tbody.innerHTML = html;
+}
+
+function deleteEntry(id) {
+  saveEntries(getEntries().filter(e => e.id !== id));
+  updateEntryCount();
+  renderEntries();
+}
+
+function clearAllEntries() {
+  if (!confirm('거래 내역을 모두 삭제할까요?')) return;
+  localStorage.removeItem('wt_entries');
+  updateEntryCount();
+  renderEntries();
+}
+
+function resetFilter() {
+  document.getElementById('f-start').value = '';
+  document.getElementById('f-end').value = '';
+  renderEntries();
+}
+
+function exportEntryCSV() {
+  const entries = getEntries();
+  if (!entries.length) { showToast('내역이 없습니다.'); return; }
+  const rows = [['날짜','거래처','공급가액','부가세','공급대가','세율'], ...entries.map(e => [e.date, e.name, e.supply, e.vat, e.total, (e.rate*100).toFixed(0)+'%'])];
+  downloadCSV(rows, 'wontax_entries.csv');
+}
+
+// ━━━━━━ CSV 다운로드 ━━━━━━
+function downloadCSV(rows, filename) {
+  const bom = '\uFEFF';
+  const csv = bom + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  showToast('CSV 파일을 다운로드했습니다.');
+}
+</script>
+</body>
+</html>
